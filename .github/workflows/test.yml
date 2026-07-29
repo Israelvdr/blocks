@@ -1,0 +1,38 @@
+name: "Test & Build"
+
+on:
+  push:
+
+jobs:
+  build:
+    name: "Test & Build"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+    steps:
+    - name: "Checkout"
+      id: checkout
+      uses: actions/checkout@v7
+
+    - name: "Setup Go"
+      id: setup-go
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.26.5'
+
+    - name: "Dependency vulnerability scan"
+      id: govulncheck
+      run: go tool govulncheck
+
+    - name: "Unit test"
+      id: unit-test
+      run: go test ./...
+
+    - name: "Build"
+      id: build
+      run: go build json .
+
+    # -name: "Upload artifacts"
+    # id: upload-artifacts
+    # uses: actions/upload-artifacts@v7
+    # with:
