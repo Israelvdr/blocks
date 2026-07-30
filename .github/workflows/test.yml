@@ -30,7 +30,7 @@ jobs:
 
     - name: "Build"
       id: build
-      run: go build json .
+      run: go build .
 
     # -name: "Upload artifacts"
     # id: upload-artifacts
