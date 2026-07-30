@@ -22,7 +22,7 @@ jobs:
 
     - name: "Dependency vulnerability scan"
       id: govulncheck
-      run: go tool govulncheck
+      run: go tool govulncheck ./...
 
     - name: "Unit test"
       id: unit-test
