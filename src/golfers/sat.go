@@ -1,4 +1,4 @@
-package blocks
+package golfers
 
 type SATBlockDesign[T comparable] struct {
 	blockDesign[T]

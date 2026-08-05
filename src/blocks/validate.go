@@ -1,4 +1,4 @@
-package pbds
+package blocks
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ func init() {
 	}
 }
 
-func (pbd *pairwiseBalancedDesign) Validate() error {
+func (pbd *blockDesignBase) ValidateInputParams() error {
 	// Validate params
 
 	// blockSize >= 2
@@ -74,8 +74,11 @@ func (pbd *pairwiseBalancedDesign) Validate() error {
 		}
 	}
 
-	// len(elements) == numElements
 	return nil
+}
+
+func (pbd *blockDesignBase) ValidateBlocks() error {
+	return fmt.Errorf("not implemented")
 }
 
 type ErrBlockInvalid interface {

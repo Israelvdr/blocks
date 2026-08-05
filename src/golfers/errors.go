@@ -1,4 +1,4 @@
-package blocks
+package golfers
 
 import "fmt"
 

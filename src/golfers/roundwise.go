@@ -1,4 +1,4 @@
-package blocks
+package golfers
 
 type RoundwiseBlockDesign[T comparable] struct {
 	blockDesign[T]

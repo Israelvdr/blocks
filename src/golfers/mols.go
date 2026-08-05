@@ -1,4 +1,4 @@
-package blocks
+package golfers
 
 type MOLSBlockDesign[T comparable] struct {
 	blockDesign[T]

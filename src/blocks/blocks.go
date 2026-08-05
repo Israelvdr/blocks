@@ -1,163 +1,55 @@
 package blocks
 
-type Block[T comparable] struct {
-	size     int
-	isPadded bool
-	elements []T
+type blockDesignBase struct {
+	numElements      int     // v
+	blockSize        int     // k
+	blocksPerPair    int     // lambda
+	numBlocks        int     // b
+	blocksPerElement int     // r
+	blocks           [][]int // B
+	family           designFamily
 }
 
-func (b Block[T]) Size() int {
-	return b.size
-}
-func (b Block[T]) Padded() bool {
-	return b.isPadded
-}
-func (b Block[T]) PadCount() int {
-	return b.size - len(b.elements)
-}
-func (b Block[T]) Elements() []T {
-	return b.elements
-}
-func (b Block[T]) ElementCount() int {
-	return len(b.elements)
-}
-
-func (b *Block[T]) swapElement(i, j int, other Block[T]) (Block[T], error) {
-	if i <= b.ElementCount() {
-		err := ErrBlockSwapIndexOOB{
-			i:            i,
-			elementCount: b.ElementCount(),
-		}
-		return other, err
-	}
-	if j <= other.ElementCount() {
-		err := ErrBlockSwapIndexOOB{
-			i:            j,
-			elementCount: other.ElementCount(),
-		}
-		return other, err
+func NewPBD(numElements, blockSize, blocksPerElement int) (*blockDesignBase, error) {
+	pbd := &blockDesignBase{
+		numElements:      numElements,
+		blockSize:        blockSize,
+		blocksPerElement: blocksPerElement,
 	}
 
-	tmp := b.elements[i]
-	b.elements[i] = other.elements[j]
-	other.elements[j] = tmp
-
-	return other, nil
+	return pbd.init()
 }
 
-// NewBlock creates and returns a new block according to the size parameter and containing the provided elements.
-// Any surplus elements are also returned.
-//
-// If too many elements are provided, only a number equal to size are stored.
-//
-// If too many elements are provided, all are used, and the block is marked as padded with nulls.
-// No nulls are actually added to the elements.
-func NewBlock[T comparable](size int, elementsIn []T) (Block[T], []T) {
-	var returnElements []T
-	if size < len(elementsIn) {
-		returnElements = elementsIn[size-1:]
+func (pbd *blockDesignBase) init() (*blockDesignBase, error) {
+	// Validate inputs
+	err := pbd.ValidateInputParams()
+	if err != nil {
+		return pbd, err
 	}
 
-	sizeActual := min(size, len(elementsIn))
-	newBlock := Block[T]{
-		elements: elementsIn[:sizeActual],
-		size:     size,
-		isPadded: size != sizeActual,
+	// Below comments are only for balanced, complete designs and should be moved to a specific solver
+	// Given v, k, & target r; calculate lambda, & b
+	// bk = vr
+	//lambda(v-1) = r(k-1)
+
+	// Initialise empty blocks 2D slice
+	pbd.blocks = make([][]int, pbd.numBlocks)
+	for i := range pbd.numBlocks {
+		pbd.blocks[i] = make([]int, pbd.blockSize)
 	}
 
-	return newBlock, returnElements
+	return pbd, nil
 }
 
-type Round[T comparable] struct {
-	blockSize int
-	blocks    []Block[T]
+type designFamily interface {
+	designFamilyName() string
+	designFamilyDescription() string
+	solve() designFamily
+	optimise() designFamily
 }
 
-func (r *Round[T]) Size() int {
-	return len(r.blocks)
-}
-func (r *Round[T]) BlockSize() int {
-	return r.blockSize
-}
-func (r *Round[T]) Blocks() []Block[T] {
-	return r.blocks
-}
-
-func NewLinearRoundFromElements[T comparable](blockSize int, elements []T) Round[T] {
-	// fast ceiling of integer division; see https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
-	numBlocks := 1 + (len(elements)-1)/blockSize
-
-	roundBlocks := make([]Block[T], numBlocks)
-	for i := 0; elements != nil; i++ {
-		roundBlocks[i], elements = NewBlock(blockSize, elements)
-	}
-
-	return Round[T]{
-		blockSize: blockSize,
-		blocks:    roundBlocks,
-	}
-}
-
-type blockDesign[T comparable] struct {
-	elements       []T
-	blockSize      int
-	blocksPerRound int
-	numRounds      int
-	rounds         []Round[T]
-}
-
-func NewBlockDesign[T comparable](blockSize, blocksPerRound, rounds int, elements []T) ClassifiedBlockDesign[T] {
-
-	newBlockDesign := blockDesign[T]{
-		elements:       elements,
-		blockSize:      blockSize,
-		blocksPerRound: blocksPerRound,
-		numRounds:      rounds,
-		rounds:         []Round[T]{},
-	}
-
-	return newBlockDesign.categorise()
-}
-
-func (bd *blockDesign[T]) categorise() ClassifiedBlockDesign[T] {
-	// Identify block design classification according to design parameters.
-	// Set block details accordingly.
-	// Set Solve() and Optimise() functions accordingly.
-
-	// TODO: remove switch block; only validating types for testing.
-	switch bd.blockSize {
-	case 0:
-		return &AffineBlockDesign[T]{*bd}
-	case 1:
-		return &MOLSBlockDesign[T]{*bd}
-	case 2:
-		return &RoundwiseBlockDesign[T]{*bd}
-	default:
-		return &RoundwiseBlockDesign[T]{*bd}
-	}
-}
-
-func (bd *blockDesign[T]) AddRound() {}
-
-func (bd *blockDesign[T]) Evaluate() float64 {
-	return bd.costFunction()()
-}
-
-func (bd *blockDesign[T]) costFunction() func() float64 {
-	return func() float64 {
-		// Iterate through blocks and rounds to identify pairwise repetitions and coverage.
-		// Cost function summarised as:
-		//
-		// w1 * sum(pairwise repetitions) / coverage %
-		// + w2 * per-element repetition variance
-		// + w3 * per-element null group variance
-		return 0
-	}
-}
-
-type ClassifiedBlockDesign[T comparable] interface {
-	AddRound()
-	Solve()
-	Evaluate() float64
-	Optimise()
-}
+// type projectionBlockDesign struct{}
+// type steinerBlockDesign struct{}
+// type completeBlockDesign struct{}
+// type balancedIncompleteBlockDesign struct{}
+// type partiallyBalancedIncompleteBlockDesign struct{}

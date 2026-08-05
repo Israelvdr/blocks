@@ -1,4 +1,4 @@
-package blocks
+package golfers
 
 const (
 	ELEMENT_ALWAYS_FIRST string = "element is always first"
