@@ -7,10 +7,10 @@ type blockDesignBase struct {
 	numBlocks        int     // b
 	blocksPerElement int     // r
 	blocks           [][]int // B
-	family           designFamily
+	family           blockDesign
 }
 
-func NewPBD(numElements, blockSize, blocksPerElement int) (*blockDesignBase, error) {
+func NewPBD(numElements, blockSize, blocksPerElement int) (blockDesign, error) {
 	pbd := &blockDesignBase{
 		numElements:      numElements,
 		blockSize:        blockSize,
@@ -20,11 +20,14 @@ func NewPBD(numElements, blockSize, blocksPerElement int) (*blockDesignBase, err
 	return pbd.init()
 }
 
-func (pbd *blockDesignBase) init() (*blockDesignBase, error) {
+func (pbd *blockDesignBase) init() (blockDesign, error) {
 	// Validate inputs
 	err := pbd.ValidateInputParams()
 	if err != nil {
-		return pbd, err
+		return &invalidBlockDesign{
+			blockDesignBase: *pbd,
+			err:             err,
+		}, err
 	}
 
 	// Below comments are only for balanced, complete designs and should be moved to a specific solver
@@ -38,14 +41,26 @@ func (pbd *blockDesignBase) init() (*blockDesignBase, error) {
 		pbd.blocks[i] = make([]int, pbd.blockSize)
 	}
 
-	return pbd, nil
+	return pbd.classify(), nil
 }
 
-type designFamily interface {
+func (pbd *blockDesignBase) classify() blockDesign {
+	switch {
+	default:
+		return &invalidBlockDesign{
+			blockDesignBase: *pbd,
+			err: &ErrUnknownDesignFamily{
+				blockBase: pbd,
+			},
+		}
+	}
+}
+
+type blockDesign interface {
 	designFamilyName() string
 	designFamilyDescription() string
-	solve() designFamily
-	optimise() designFamily
+	solve() blockDesign
+	optimise() blockDesign
 }
 
 // type projectionBlockDesign struct{}

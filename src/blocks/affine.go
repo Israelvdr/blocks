@@ -21,10 +21,10 @@ func (abd *resolvableGroupDivisibleDesign) designFamilyDescription() string {
 	return RESOLVABLE_GROUP_DIVISIBLE_DESIGN_DESCRIPTION
 }
 
-func (abd *resolvableGroupDivisibleDesign) solve() designFamily {
+func (abd *resolvableGroupDivisibleDesign) solve() blockDesign {
 	return abd
 }
 
-func (abd *resolvableGroupDivisibleDesign) optimise() designFamily {
+func (abd *resolvableGroupDivisibleDesign) optimise() blockDesign {
 	return abd
 }
